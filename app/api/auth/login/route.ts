@@ -50,6 +50,12 @@ export async function POST(request: NextRequest) {
     let user
     try {
       user = await getUserByPhone(phone_number)
+      console.log('[LOGIN] User lookup result:', { 
+        found: !!user, 
+        userId: user?.id, 
+        role: user?.role,
+        phoneNumber: phone_number?.substring(0, 5) + '***'
+      })
     } catch (error: any) {
       console.error('Error fetching user during login:', error)
       return errorResponse('Database error during login. Please try again.', 500)
@@ -57,8 +63,11 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       // Don't reveal if user exists or not (security best practice)
+      console.log('[LOGIN] User not found for phone:', phone_number?.substring(0, 5) + '***')
       return errorResponse('Invalid phone number or PIN', 401)
     }
+    
+    console.log('[LOGIN] User found, role:', user.role)
 
     // Verify PIN
     let isValidPin
@@ -79,6 +88,8 @@ export async function POST(request: NextRequest) {
       role: user.role,
       phoneNumber: user.phone_number,
     })
+    
+    console.log('[LOGIN] Token generated successfully for role:', user.role)
 
     // Return user data (without PIN hash)
     const { pin_hash: _, ...userWithoutPin } = user
@@ -87,6 +98,8 @@ export async function POST(request: NextRequest) {
       user: userWithoutPin,
       message: 'Login successful',
     })
+    
+    console.log('[LOGIN] Login successful for user:', { id: user.id, role: user.role })
 
     // Set httpOnly cookie on response
     response.cookies.set('bu-auth-token', token, {

@@ -1,6 +1,6 @@
 // Database Types - Match Supabase schema
 
-export type UserRole = 'user' | 'celebrant' | 'vendor'
+export type UserRole = 'user' | 'celebrant' | 'vendor' | 'both' | 'admin' | 'superadmin'
 
 export interface User {
   id: string

@@ -103,7 +103,7 @@ export async function createUser(userData: {
   first_name: string
   last_name: string
   email?: string
-  role: 'user' | 'celebrant' | 'vendor' | 'both'
+  role: 'user' | 'celebrant' | 'vendor' | 'both' | 'admin' | 'superadmin'
   pin_hash: string
 }): Promise<User | null> {
   // #region agent log

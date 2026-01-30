@@ -38,7 +38,7 @@ export default function Home() {
   const [mode, setMode] = useState<'user' | 'celebrant' | 'vendor'>('user')
   const [mounted, setMounted] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [currentUser, setCurrentUser] = useState<{ id: string; role: 'user' | 'celebrant' | 'vendor' | 'both'; phoneNumber: string; name: string } | null>(null)
+  const [currentUser, setCurrentUser] = useState<{ id: string; role: 'user' | 'celebrant' | 'vendor' | 'both' | 'admin' | 'superadmin'; phoneNumber: string; name: string } | null>(null)
 
   const handleNavigate = (page: string, data?: any) => {
     setCurrentPage(page)
@@ -68,8 +68,8 @@ export default function Home() {
               phoneNumber: user.phoneNumber,
               name: user.name,
             })
-            // Set initial mode: Guest for 'user' and 'celebrant' roles, Vendor for 'vendor' role
-            setMode(user.role === 'vendor' ? 'vendor' : 'user')
+            // Set initial mode: Guest for 'user', 'celebrant', 'admin', 'superadmin' roles, Vendor for 'vendor' and 'both' roles
+            setMode(user.role === 'vendor' || user.role === 'both' ? 'vendor' : 'user')
           } else {
             // Not authenticated (401 or other error) - clear any stale sessionStorage
             // This is expected when user is not logged in, so we handle it silently
@@ -91,11 +91,11 @@ export default function Home() {
     }
   }, [])
   
-  const handleAuthSuccess = (user: { id: string; role: 'user' | 'celebrant' | 'vendor' | 'both'; phoneNumber: string; name: string }) => {
+  const handleAuthSuccess = (user: { id: string; role: 'user' | 'celebrant' | 'vendor' | 'both' | 'admin' | 'superadmin'; phoneNumber: string; name: string }) => {
     setIsAuthenticated(true)
     setCurrentUser(user)
-    // Set initial mode: Guest for 'user' and 'celebrant' roles, Vendor for 'vendor' role
-    setMode(user.role === 'vendor' ? 'vendor' : 'user')
+            // Set initial mode: Guest for 'user', 'celebrant', 'admin', 'superadmin' roles, Vendor for 'vendor' and 'both' roles
+            setMode(user.role === 'vendor' || user.role === 'both' ? 'vendor' : 'user')
     setCurrentPage('dashboard')
   }
   
