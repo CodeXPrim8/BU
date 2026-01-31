@@ -7,10 +7,16 @@ let jwtSecretValidated = false
 function ensureJWTSecretValidated() {
   if (!jwtSecretValidated && typeof window === 'undefined') {
     // Skip validation during build time (Next.js build phase)
-    const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' || 
-                        process.env.NEXT_PHASE === 'phase-development' ||
-                        process.env.VERCEL === '1' ||
-                        !process.env.JWT_SECRET // If not set, likely build time
+    // Check multiple indicators of build time
+    const isBuildTime = 
+      process.env.NEXT_PHASE === 'phase-production-build' || 
+      process.env.NEXT_PHASE === 'phase-development' ||
+      process.env.VERCEL === '1' ||
+      process.env.VERCEL_ENV !== undefined || // Vercel sets this
+      process.env.CI === '1' || // Common CI indicator
+      !process.env.JWT_SECRET || // If not set, likely build time
+      process.env.JWT_SECRET === 'your_jwt_secret_here_minimum_32_characters' || // Placeholder from env.example
+      process.env.JWT_SECRET.includes('change-in-production') // Weak default
     
     if (isBuildTime) {
       jwtSecretValidated = true // Skip validation during build
