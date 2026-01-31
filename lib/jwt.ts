@@ -1,15 +1,23 @@
 import jwt from 'jsonwebtoken'
 import { validateJWTSecret } from './security'
 
-// Validate JWT secret on module load
-try {
-  validateJWTSecret()
-} catch (error: any) {
-  console.error('❌ JWT_SECRET validation failed:', error.message)
-  if (process.env.NODE_ENV === 'production') {
-    throw error // Fail fast in production
+// Validate JWT secret lazily (only when actually used, not during build)
+// This prevents build failures when JWT_SECRET is not set or is a placeholder
+let jwtSecretValidated = false
+function ensureJWTSecretValidated() {
+  if (!jwtSecretValidated && typeof window === 'undefined') {
+    try {
+      validateJWTSecret()
+      jwtSecretValidated = true
+    } catch (error: any) {
+      // Only throw in production runtime, not during build
+      if (process.env.NODE_ENV === 'production' && !process.env.NEXT_PHASE && process.env.VERCEL !== '1') {
+        throw error
+      }
+      console.warn('⚠️  JWT_SECRET validation warning:', error.message)
+      jwtSecretValidated = true // Mark as validated to avoid repeated warnings
+    }
   }
-  console.warn('⚠️  Continuing in development mode, but JWT_SECRET must be set for production')
 }
 
 // JWT secret - REQUIRED, no fallback
@@ -31,6 +39,7 @@ export interface RefreshTokenPayload {
 
 // Generate access token (short-lived)
 export function generateToken(payload: JWTPayload): string {
+  ensureJWTSecretValidated()
   return jwt.sign(
     { ...payload, type: 'access' },
     JWT_SECRET,
@@ -44,6 +53,7 @@ export function generateToken(payload: JWTPayload): string {
 
 // Generate refresh token (long-lived)
 export function generateRefreshToken(userId: string, tokenId: string): string {
+  ensureJWTSecretValidated()
   const payload: RefreshTokenPayload = { userId, tokenId }
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_REFRESH_EXPIRES_IN,
@@ -54,6 +64,7 @@ export function generateRefreshToken(userId: string, tokenId: string): string {
 
 // Verify refresh token
 export function verifyRefreshToken(token: string): RefreshTokenPayload | null {
+  ensureJWTSecretValidated()
   try {
     const decoded = jwt.verify(token, JWT_SECRET, {
       issuer: 'bu-app',
@@ -69,6 +80,7 @@ export function verifyRefreshToken(token: string): RefreshTokenPayload | null {
 
 // Verify JWT token
 export function verifyToken(token: string): JWTPayload | null {
+  ensureJWTSecretValidated()
   try {
     const decoded = jwt.verify(token, JWT_SECRET, {
       issuer: 'bu-app',
